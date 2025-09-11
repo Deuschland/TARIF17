@@ -15,7 +15,6 @@ const FILES_TO_CACHE = [
   '/webfonts/fa-regular-400.woff'
 ];
 
-// Встановлення
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
@@ -23,7 +22,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Активація
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -33,7 +31,6 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Обробка запитів
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 

@@ -4,12 +4,7 @@ const FILES_TO_CACHE = [
   './style.css',
   './script.js',
   './manifest.json',
-  './icon-192.png',
-  './css/all.min.css',
-  './webfonts/fa-solid-900.woff2',
-  './webfonts/fa-solid-900.woff',
-  './webfonts/fa-regular-400.woff2',
-  './webfonts/fa-regular-400.woff'
+  './icon-192.png'  
 ];
 
 // Встановлення SW і кешування ресурсів

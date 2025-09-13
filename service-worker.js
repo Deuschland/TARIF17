@@ -1,20 +1,18 @@
 const CACHE_NAME = 'tarif-cache';
 const FILES_TO_CACHE = [
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-256.png',
-  '/icon-384.png',
-  '/icon-512.png',
-  '/css/all.min.css',
-  '/webfonts/fa-solid-900.woff2',
-  '/webfonts/fa-solid-900.woff',
-  '/webfonts/fa-regular-400.woff2',
-  '/webfonts/fa-regular-400.woff'
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './icon-192.png',
+  './css/all.min.css',
+  './webfonts/fa-solid-900.woff2',
+  './webfonts/fa-solid-900.woff',
+  './webfonts/fa-regular-400.woff2',
+  './webfonts/fa-regular-400.woff'
 ];
 
+// Встановлення SW і кешування ресурсів
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
@@ -22,45 +20,45 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+// Активація SW і очищення старого кешу
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(key => key !== CACHE_NAME && caches.delete(key)))
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
     )
   );
   self.clients.claim();
 });
 
+// Обробка запитів
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request)
+      if (cachedResponse) {
+        // Є в кеші — віддаємо одразу
+        return cachedResponse;
+      }
+      // Немає в кеші — пробуємо з мережі
+      return fetch(event.request)
         .then(networkResponse => {
-          caches.open(CACHE_NAME).then(cache => {
+          // Якщо успішно — додаємо в кеш
+          return caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, networkResponse.clone());
-            if (!cachedResponse || !responsesAreSame(cachedResponse, networkResponse)) {
-              notifyClientsAboutUpdate();
-            }
+            return networkResponse;
           });
-          return networkResponse;
         })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
+        .catch(() => {
+          // Якщо немає інтернету і немає в кеші — нічого не робимо
+          return;
+        });
     })
   );
 });
-
-function responsesAreSame(res1, res2) {
-  return res1 && res2 && res1.status === res2.status && res1.type === res2.type;
-}
-
-function notifyClientsAboutUpdate() {
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
-    });
-  });
-}
